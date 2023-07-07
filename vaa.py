@@ -7,7 +7,7 @@ class VAA:
     num_sigs: int
 
     raw_sigs: bytes
-    sigs: list[bytes]
+    sigs: list[str]
 
     digest: bytes
     timestamp: int
@@ -103,6 +103,7 @@ class VAA:
                 case 3:
                     extra["Meta"] = "TokenBridge Transfer With Payload"
                     extra["Type"] = payload_type 
+
                     extra["Amount"], off = as_hex(data, off, 32)
                     extra["Contract"], off = as_hex(data, off, 32)
                     extra["FromChain"], off = as_int(data, off, 2)

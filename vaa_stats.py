@@ -5,11 +5,10 @@ import numpy as np
 import base64
 
 from vaa import VAA
-from consts import CHAINS
+from consts import CHAINS, UPDATED_FMT, TS_FMT
 
 VAA_BASE_URL = "https://api.wormscan.io/api/v1/vaas"
-UPDATED_FMT = '%Y-%m-%dT%H:%M:%S.%fZ'
-TS_FMT = '%Y-%m-%dT%H:%M:%SZ'
+
 
 def getVAATimes(data: dict)->tuple[float, float]:
     ts = datetime.strptime(data["timestamp"], TS_FMT)
