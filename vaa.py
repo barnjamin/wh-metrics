@@ -1,51 +1,5 @@
+from consts import TOKEN_BRIDGE, CORE_GOVERNANCE
 
-TOKEN_BRIDGE = "000000000000000000000000000000000000000000546f6b656e427269646765"
-CORE_GOVERNANCE = "00000000000000000000000000000000000000000000000000000000436f7265"
-
-
-class TokenBridgeAdmin:
-    module: bytes
-    action_id: int
-    action: str
-
-    targetChain: int
-    targetEmitter: bytes
-
-    newContract: bytes
-
-    emitterChain: int
-
-    # @staticmethod
-    # def parse(vaa: bytes)->"TokenBridgeAdmin":
-    #     tba = TokenBridgeAdmin()
-
-
-    #     tba.module = vaa[off : (off + 32)].hex()
-    #     off += 32
-
-    #     ret["action"] = int.from_bytes(vaa[off : (off + 1)], "big")
-    #     off += 1
-
-    #     if ret["action"] == 1:
-    #         ret["Meta"] = "TokenBridge RegisterChain"
-    #         ret["targetChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-    #         off += 2
-    #         ret["EmitterChainID"] = int.from_bytes(vaa[off : (off + 2)], "big")
-    #         off += 2
-    #         ret["targetEmitter"] = vaa[off : (off + 32)].hex()
-    #         off += 32
-
-    #     if ret["action"] == 2:
-    #         ret["Meta"] = "TokenBridge UpgradeContract"
-    #         ret["targetChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-    #         off += 2
-    #         ret["newContract"] = vaa[off : (off + 32)].hex()
-    #         off += 32
-
-    # pass
-
-class Governance:
-    pass
 
 class VAA:
     version: int
@@ -59,16 +13,17 @@ class VAA:
     timestamp: int
     nonce: int
     chain: int
-    emitter: bytes
+    emitter: str 
     sequence: int
     consistency: int
 
+    extra: dict[str, any]
 
-    def __str__(self)->str:
-        return f"{self.chain}/{self.emitter.hex()}/{self.sequence}: {self.consistency}"
+    def __str__(self) -> str:
+        return f"{self.chain}/{self.emitter}/{self.sequence}: {self.consistency}"
 
-    def segment(self)->str:
-        return f"{self.emitter.hex()}|{self.consistency}"
+    def segment(self) -> str:
+        return f"{self.emitter}|{self.consistency}"
 
     @staticmethod
     def parse(data: bytes) -> "VAA":
@@ -77,147 +32,96 @@ class VAA:
         vaa.idx = int.from_bytes(data[1:5], "big")
         vaa.num_sigs = int.from_bytes(data[5:6], "big")
 
-        vaa.raw_sigs =  data[6 : (vaa.num_sigs * 66) + 6]
+        vaa.raw_sigs = data[6 : (vaa.num_sigs * 66) + 6]
         vaa.sigs = []
         for i in range(vaa.num_sigs):
             vaa.sigs.append(data[(6 + (i * 66)) : (6 + (i * 66)) + 66].hex())
         off = (vaa.num_sigs * 66) + 6
 
-        vaa.digest = data[off:]  # This is what is actually signed...
+        vaa.digest = data[off:]
 
-        vaa.timestamp = int.from_bytes(data[off : (off + 4)], "big")
-        off += 4
+        vaa.timestamp, off = as_int(data, off, 4)
+        vaa.nonce, off = as_int(data, off, 4)
+        vaa.chain, off = as_int(data, off, 2)
+        vaa.emitter, off = as_hex(data, off, 32)
+        vaa.sequence, off = as_int(data, off, 8)
+        vaa.consistency, off = as_int(data, off, 1)
 
-        vaa.nonce = int.from_bytes(data[off : (off + 4)], "big")
-        off += 4
+        extra = {"Meta": "Unknown"}
 
-        vaa.chain = int.from_bytes(data[off : (off + 2)], "big")
-        off += 2
+        if data[off : off + 32].hex() == TOKEN_BRIDGE:
+            extra["Meta"] = "TokenBridge"
 
-        vaa.emitter = data[off : (off + 32)]
-        off += 32
+            extra["module"], off = as_hex(data, off, 32)
+            extra["action"], off = as_int(data, off, 1)
 
-        vaa.sequence = int.from_bytes(data[off : (off + 8)], "big")
-        off += 8
+            if extra["action"] == 1:
+                extra["Meta"] = "TokenBridge RegisterChain"
+                extra["targetChain"], off = as_int(data, off, 2)
+                extra["EmitterChainID"], off = as_int(data, off, 2)
+                extra["targetEmitter"], off = as_hex(data, off, 32)
 
-        vaa.consistency = int.from_bytes(data[off : (off + 1)], "big")
-        off += 1
+            if extra["action"] == 2:
+                extra["Meta"] = "TokenBridge UpgradeContract"
+                extra["targetChain"], off = as_int(data, off, 2)
+                extra["newContract"], off = as_hex(data, off, 32)
+
+        if data[off : off + 32].hex() == CORE_GOVERNANCE:
+            extra["Meta"] = "CoreGovernance"
+
+            extra["module"], off = as_hex(data, off, 32)
+            extra["action"], off = as_int(data, off, 1)
+            extra["targetChain"], off = as_int(data, off, 2)
+
+            if extra["action"] == 2:
+                extra["NewGuardianSetIndex"], off = as_int(data, off, 4)
+            else:
+                extra["Contract"], off = as_hex(data, off, 32)
+
+        if len(data[off:]) >= 100:
+            payload_type, off = as_int(data, off, 1)
+            match payload_type:
+                case 1:
+                    extra["Meta"] = "TokenBridge Transfer"
+                    extra["Type"] = payload_type
+
+                    extra["Amount"], off = as_hex(data, off, 32)
+                    extra["Contract"], off = as_hex(data, off, 32)
+                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["ToAddress"], off = as_hex(data, off, 32)
+                    extra["ToChain"], off = as_int(data, off, 2)
+                    extra["Fee"], off = as_hex(data, off, 32)
+                case 2:
+                    extra["Meta"] = "TokenBridge Attest"
+                    extra["Type"] = payload_type
+
+                    extra["Contract"], off = as_hex(data, off, 32)
+                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["Decimals"], off = as_int(data, off, 1)
+                    extra["Symbol"], off = as_hex(data, off, 32) 
+                    extra["Name"], off = as_hex(data, off, 32)
+                case 3:
+                    extra["Meta"] = "TokenBridge Transfer With Payload"
+                    extra["Type"] = payload_type 
+                    extra["Amount"], off = as_hex(data, off, 32)
+                    extra["Contract"], off = as_hex(data, off, 32)
+                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["ToAddress"], off = as_hex(data, off, 32)
+                    extra["ToChain"], off = as_int(data, off, 2) 
+                    extra["FromAddress"], off = as_hex(data, off, 32)
+                    extra["Payload"] = data[off:].hex()
+
+                    extra["Fee"] = bytes(32)
+
+        vaa.extra = extra
 
         return vaa
 
-        #ret["Meta"] = "Unknown"
-        #if vaa[off : (off + 32)].hex() == TOKEN_BRIDGE:
 
-        #    ret["Meta"] = "TokenBridge"
+def as_int(data: bytes, off: int, len: int) -> tuple[int, int]:
+    val = int.from_bytes(data[off : off + len], "big")
+    return (val, off + len)
 
-        #    ret["module"] = vaa[off : (off + 32)].hex()
-        #    off += 32
 
-        #    ret["action"] = int.from_bytes(vaa[off : (off + 1)], "big")
-        #    off += 1
-
-        #    if ret["action"] == 1:
-        #        ret["Meta"] = "TokenBridge RegisterChain"
-        #        ret["targetChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-        #        ret["EmitterChainID"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-        #        ret["targetEmitter"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #    if ret["action"] == 2:
-        #        ret["Meta"] = "TokenBridge UpgradeContract"
-        #        ret["targetChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-        #        ret["newContract"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #if vaa[off : (off + 32)].hex() == CORE_GOVERNANCE:
-        #    ret["Meta"] = "CoreGovernance"
-
-        #    ret["module"] = vaa[off : (off + 32)].hex()
-        #    off += 32
-
-        #    ret["action"] = int.from_bytes(vaa[off : (off + 1)], "big")
-        #    off += 1
-
-        #    ret["targetChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #    off += 2
-
-        #    if ret["action"] == 2:
-        #        ret["NewGuardianSetIndex"] = int.from_bytes(vaa[off : (off + 4)], "big")
-        #    else:
-        #        ret["Contract"] = vaa[off : (off + 32)].hex()
-
-        #if len(vaa[off:]) == 100 and int.from_bytes(vaa[off : off + 1], "big") == 2:
-        #    ret["Meta"] = "TokenBridge Attest"
-
-        #    ret["Type"] = int.from_bytes((vaa[off : off + 1]), "big")
-        #    off += 1
-
-        #    ret["Contract"] = vaa[off : (off + 32)].hex()
-        #    off += 32
-
-        #    ret["FromChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #    off += 2
-
-        #    ret["Decimals"] = int.from_bytes((vaa[off : off + 1]), "big")
-        #    off += 1
-
-        #    ret["Symbol"] = vaa[off : (off + 32)].hex()
-        #    off += 32
-
-        #    ret["Name"] = vaa[off : (off + 32)].hex()
-
-        #if len(vaa[off:]) >= 133:
-
-        #    if int.from_bytes((vaa[off : off + 1]), "big") == 1:
-        #        ret["Meta"] = "TokenBridge Transfer"
-
-        #        ret["Type"] = int.from_bytes((vaa[off : off + 1]), "big")
-        #        off += 1
-
-        #        ret["Amount"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["Contract"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["FromChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-
-        #        ret["ToAddress"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["ToChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-
-        #        ret["Fee"] = vaa[off : (off + 32)].hex()
-
-        #    elif int.from_bytes((vaa[off : off + 1]), "big") == 3:
-        #        ret["Meta"] = "TokenBridge Transfer With Payload"
-
-        #        ret["Type"] = int.from_bytes((vaa[off : off + 1]), "big")
-        #        off += 1
-
-        #        ret["Amount"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["Contract"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["FromChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-
-        #        ret["ToAddress"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["ToChain"] = int.from_bytes(vaa[off : (off + 2)], "big")
-        #        off += 2
-
-        #        ret["Fee"] = self.zeroPadBytes
-
-        #        ret["FromAddress"] = vaa[off : (off + 32)].hex()
-        #        off += 32
-
-        #        ret["Payload"] = vaa[off:].hex()
+def as_hex(data: bytes, off: int, len: int) -> tuple[bytes, int]:
+    return (data[off : off + len].hex(), off + len)

@@ -1,11 +1,17 @@
+
+
+TOKEN_BRIDGE = "000000000000000000000000000000000000000000546f6b656e427269646765"
+CORE_GOVERNANCE = "00000000000000000000000000000000000000000000000000000000436f7265"
+
+
 CHAINS = {
-  "solana": 1,
-  "ethereum": 2,
-  "terra": 3,
-  "bsc": 4,
-  "polygon": 5,
-  "avalanche": 6,
-  "oasis": 7,
+  #"solana": 1,
+  #"ethereum": 2,
+  #"terra": 3,
+  #"bsc": 4,
+  #"polygon": 5,
+  #"avalanche": 6,
+  #"oasis": 7,
   "algorand": 8,
   #"aurora": 9,
   #"fantom": 10,
