@@ -7,7 +7,7 @@ from consts import TS_FMT, UPDATED_FMT, GUARDIAN_KEYS
 OBS_BASE_URL = "https://api.wormscan.io/api/v1/observations"
 
 
-def getObsTime(data: dict)->int:
+def getObsTime(data: dict) -> int:
     try:
         indexed = datetime.strptime(data["indexedAt"], UPDATED_FMT)
     except Exception:
@@ -17,13 +17,12 @@ def getObsTime(data: dict)->int:
 
 
 def get_observations(chain_id: int):
-
     observations: dict[str, list[tuple[str, int]]] = {}
     for page in range(50):
         result = requests.get(f"{OBS_BASE_URL}/{chain_id}?page={page}")
         obs = result.json()
 
-        if len(obs) == 0: 
+        if len(obs) == 0:
             break
 
         for o in obs:
@@ -33,8 +32,7 @@ def get_observations(chain_id: int):
                 observations[id] = []
             observations[id].append((o["guardianAddr"], getObsTime(o)))
 
-    deltas: dict[str, list[int]] = {name:[] for name in GUARDIAN_KEYS.values()}
-
+    deltas: dict[str, list[int]] = {name: [] for name in GUARDIAN_KEYS.values()}
 
     for id, obs in observations.items():
         ts = np.array([o[1] for o in obs])
