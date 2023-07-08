@@ -26,8 +26,7 @@ def get_observations(chain_id: int):
             break
 
         for o in obs:
-            id_chunks = o["id"].split("/")
-            id = "/".join(id_chunks[:3])
+            id = "/".join(o["id"].split("/")[:3])
             if id not in observations:
                 observations[id] = []
             observations[id].append((o["guardianAddr"], getObsTime(o)))

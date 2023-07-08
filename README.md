@@ -1,3 +1,9 @@
+
+Collection of random metrics to gathered to improve xchain latency
+
+<details>
+<summary> VAA Times </summary>
+
 ## Acala
 ![Acala](vaa_plots/acala_times.png)
 
@@ -57,3 +63,5 @@
 
 ## Sui
 ![Sui](vaa_plots/sui_times.png)
+
+</details>

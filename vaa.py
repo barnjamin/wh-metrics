@@ -8,11 +8,7 @@ class VAA:
     version: int
     idx: int
     num_sigs: int
-
-    raw_sigs: bytes
     sigs: list[str]
-
-    digest: bytes
     timestamp: int
     nonce: int
     chain: int
@@ -38,14 +34,10 @@ class VAA:
         vaa.idx, off = as_int(data, off, 4)
         vaa.num_sigs, off = as_int(data, off, 1)
 
-        vaa.raw_sigs = data[off : (vaa.num_sigs * SIG_LENGTH) + off]
         vaa.sigs = []
-        for i in range(vaa.num_sigs):
-            start = off + (i * SIG_LENGTH)
-            vaa.sigs.append(data[start:SIG_LENGTH].hex())
-        off = (vaa.num_sigs * SIG_LENGTH) + off
-
-        vaa.digest = data[off:]
+        for _ in range(vaa.num_sigs):
+            sig, off = as_hex(data, off, SIG_LENGTH)
+            vaa.sigs.append(sig)
 
         vaa.timestamp, off = as_int(data, off, 4)
         vaa.nonce, off = as_int(data, off, 4)
@@ -59,27 +51,27 @@ class VAA:
         if data[off : off + 32].hex() == TOKEN_BRIDGE:
             extra["Meta"] = "TokenBridge"
 
-            extra["module"], off = as_hex(data, off, 32)
-            extra["action"], off = as_int(data, off, 1)
+            extra["Module"], off = as_hex(data, off, 32)
+            extra["Action"], off = as_int(data, off, 1)
 
-            if extra["action"] == 1:
+            if extra["Action"] == 1:
                 extra["Meta"] = "TokenBridge RegisterChain"
-                extra["targetChain"], off = as_int(data, off, 2)
+                extra["TargetChain"], off = as_int(data, off, 2)
                 extra["EmitterChainID"], off = as_int(data, off, 2)
-                extra["targetEmitter"], off = as_hex(data, off, 32)
-            elif extra["action"] == 2:
+                extra["TargetEmitter"], off = as_hex(data, off, 32)
+            elif extra["Action"] == 2:
                 extra["Meta"] = "TokenBridge UpgradeContract"
-                extra["targetChain"], off = as_int(data, off, 2)
-                extra["newContract"], off = as_hex(data, off, 32)
+                extra["TargetChain"], off = as_int(data, off, 2)
+                extra["NewContract"], off = as_hex(data, off, 32)
 
         if data[off : off + 32].hex() == CORE_GOVERNANCE:
             extra["Meta"] = "CoreGovernance"
 
-            extra["module"], off = as_hex(data, off, 32)
-            extra["action"], off = as_int(data, off, 1)
-            extra["targetChain"], off = as_int(data, off, 2)
+            extra["Module"], off = as_hex(data, off, 32)
+            extra["Action"], off = as_int(data, off, 1)
+            extra["TargetChain"], off = as_int(data, off, 2)
 
-            if extra["action"] == 2:
+            if extra["Action"] == 2:
                 extra["NewGuardianSetIndex"], off = as_int(data, off, 4)
             else:
                 extra["Contract"], off = as_hex(data, off, 32)
@@ -92,8 +84,9 @@ class VAA:
                     extra["Type"] = payload_type
 
                     extra["Amount"], off = as_hex(data, off, 32)
-                    extra["Contract"], off = as_hex(data, off, 32)
-                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["TokenContract"], off = as_hex(data, off, 32)
+                    extra["TokenChain"], off = as_int(data, off, 2)
+
                     extra["ToAddress"], off = as_hex(data, off, 32)
                     extra["ToChain"], off = as_int(data, off, 2)
                     extra["Fee"], off = as_hex(data, off, 32)
@@ -101,8 +94,8 @@ class VAA:
                     extra["Meta"] = "TokenBridge Attest"
                     extra["Type"] = payload_type
 
-                    extra["Contract"], off = as_hex(data, off, 32)
-                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["TokenContract"], off = as_hex(data, off, 32)
+                    extra["TokenChain"], off = as_int(data, off, 2)
                     extra["Decimals"], off = as_int(data, off, 1)
                     extra["Symbol"], off = as_hex(data, off, 32)
                     extra["Name"], off = as_hex(data, off, 32)
@@ -111,8 +104,8 @@ class VAA:
                     extra["Type"] = payload_type
 
                     extra["Amount"], off = as_hex(data, off, 32)
-                    extra["Contract"], off = as_hex(data, off, 32)
-                    extra["FromChain"], off = as_int(data, off, 2)
+                    extra["TokenContract"], off = as_hex(data, off, 32)
+                    extra["TokenChain"], off = as_int(data, off, 2)
                     extra["ToAddress"], off = as_hex(data, off, 32)
                     extra["ToChain"], off = as_int(data, off, 2)
                     extra["FromAddress"], off = as_hex(data, off, 32)
@@ -120,8 +113,10 @@ class VAA:
 
                     extra["Fee"] = bytes(32).hex()
 
-        vaa.extra = extra
+        else:
+            extra["Raw"] = data[off:].hex()
 
+        vaa.extra = extra
         return vaa
 
 
