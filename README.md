@@ -10,6 +10,9 @@ Collection of random metrics to gathered to improve xchain latency
 ## Arbitrum
 ![Arbitrum](vaa_plots/arbitrum_times.png)
 
+## Base 
+![Base](vaa_plots/base_times.png)
+
 ## Celo
 ![Celo](vaa_plots/celo_times.png)
 
@@ -22,8 +25,8 @@ Collection of random metrics to gathered to improve xchain latency
 ## Polygon
 ![Polygon](vaa_plots/polygon_times.png)
 
-## Tera
-![Tera](vaa_plots/terra_times.png)
+## Terra
+![Terra](vaa_plots/terra_times.png)
 
 ## Algorand
 ![Algorand](vaa_plots/algorand_times.png)
@@ -39,6 +42,9 @@ Collection of random metrics to gathered to improve xchain latency
 
 ## Near
 ![Near](vaa_plots/near_times.png)
+
+## Optimism
+![Optimism](vaa_plots/optimism_times.png)
 
 ## Solana
 ![Solana](vaa_plots/solana_times.png)
@@ -60,6 +66,9 @@ Collection of random metrics to gathered to improve xchain latency
 
 ## Oasis
 ![Oasis](vaa_plots/oasis_times.png)
+
+## Sei
+![Sei](vaa_plots/sei_times.png)
 
 ## Sui
 ![Sui](vaa_plots/sui_times.png)

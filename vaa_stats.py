@@ -81,4 +81,4 @@ if __name__ == "__main__":
 
         plt.ylim([0, max_y])
 
-        plt.savefig(f"plots/{name}_times.png")
+        plt.savefig(f"vaa_plots/{name}_times.png")

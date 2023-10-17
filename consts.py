@@ -36,6 +36,7 @@ CHAINS = {
     "sepolia": 10002,
 }
 
+CHAINS_BY_ID = {v:k for k,v in CHAINS.items()}
 
 GUARDIAN_SET = [
     {
