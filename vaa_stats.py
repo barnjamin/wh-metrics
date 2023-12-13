@@ -7,7 +7,7 @@ import base64
 from vaa import VAA
 from consts import CHAINS, UPDATED_FMT, TS_FMT
 
-VAA_BASE_URL = "https://api.wormscan.io/api/v1/vaas"
+VAA_BASE_URL = "https://api.wormholescan.io/api/v1/vaas"
 
 
 def getVAATimes(data: dict) -> tuple[float, float]:
