@@ -50,9 +50,10 @@ def getVAAs(chainId: int, page: int = 0) -> dict[str, list[tuple[int, int]]]:
 
 
 if __name__ == "__main__":
+    num_pages = 100
     for name, id in CHAINS.items():
         all_vaa_stats: dict[str, list[tuple[int, int]]] = {}
-        for page in range(100):
+        for page in range(num_pages):
             vaas = getVAAs(id, page)
             if vaas is None:
                 break
