@@ -1,3 +1,4 @@
+import json
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -63,8 +64,11 @@ if __name__ == "__main__":
                     all_vaa_stats[seg] = []
                 all_vaa_stats[seg].extend(data)
 
-        max_y = 100
 
+        with open(f"vaa_stats/{name}.json", "w") as f:
+            f.write(json.dumps(all_vaa_stats))
+
+        max_y = 100
         plt.figure(figsize=(10, 5))
         for seg, data in all_vaa_stats.items():
             ts = [datetime.fromtimestamp(x[0]) for x in data]
