@@ -32,9 +32,33 @@ CHAINS = {
     "btc": 29,
     "base": 30,
     "sei": 32,
+    "rootstock": 33,
+    "scroll": 34,
+    "mantle": 35,
     "wormchain": 3104,
-    "sepolia": 10002,
+    "cosmoshub": 4000,
+    "evmos": 4001,
+    "kujira": 4002,
+    "neutron": 4003,
+    "celestia": 4004,
+    "stargaze": 4005,
+    "seda": 4006,
+    "dymension": 4007,
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 CHAINS_BY_ID = {v:k for k,v in CHAINS.items()}
 
